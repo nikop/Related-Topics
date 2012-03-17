@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE modification SYSTEM "http://www.simplemachines.org/xml/modification">
+
+<modification xmlns="http://www.simplemachines.org/xml/modification" xmlns:smf="http://www.simplemachines.org/">
+	<id>Niko:RelatedTopics</id>
+	<version>{version}</version>
+
+	<file name="$sourcedir/Admin.php">
+		<operation>
+			<search position="after"><![CDATA['current_theme' => array(]]></search>
+			<add><![CDATA[
+				'relatedtopics' => array(
+					'label' => $txt['admin_related_topic'],
+					'file' => 'RelatedTopics.php',
+					'function' => 'RelatedTopicsAdmin',
+					'subsections' => array(
+						'main' => array($txt['admin_related_topics_information']),
+						'settings' => array($txt['admin_related_topics_settings']),
+						'methods' => array($txt['admin_related_topics_methods']),
+					),
+				),
+				]]></add>
+		</operation>
+
+		<operation>
+			<search position="before"><![CDATA[						// Mod Authors for a "ADD AFTER" on this line. Ensure you end your change with a comma. For example:]]></search>
+			<add><![CDATA[						'related' => array($txt['admin_related_topic']),]]></add>
+		</operation>
+	</file>
+
+	<file name="$sourcedir/RemoveTopic.php">
+		<operation>
+			<search position="after"><![CDATA[	// Recycle topics that aren't in the recycle board...]]></search>
+			<add><![CDATA[	// Added by Related Topics
+		require_once($sourcedir . '/Subs-Related.php');
+		relatedRemoveTopics($topics);
+		// Related Topics END
+]]></add>
+		</operation>
+	</file>
+
+	<file name="$sourcedir/Subs-Post.php">
+		<operation>
+			<search position="before"><![CDATA[		$topicOptions['id'] = $smcFunc['db_insert_id']('{db_prefix}topics', 'id_topic');
+]]></search>
+			<add><![CDATA[
+	// Added by Related Topics
+	global $sourcedir;
+	require_once($sourcedir . '/Subs-Related.php');
+	relatedUpdateTopics($topicOptions['id']);
+	// Related Topics END]]></add>
+		</operation>
+
+		<operation>
+			<search position="replace"><![CDATA[		if ($smcFunc['db_num_rows']($request) == 1)
+			updateStats('subject', $topicOptions['id'], $msgOptions['subject']);]]></search>
+			<add><![CDATA[
+		if ($smcFunc['db_num_rows']($request) == 1)
+		{
+			updateStats('subject', $topicOptions['id'], $msgOptions['subject']);
+
+			// Added by Related Topics
+			global $sourcedir;
+			require_once($sourcedir . '/Subs-Related.php');
+			relatedUpdateTopics($topicOptions['id']);
+			// Related Topics END
+		}]]></add>
+		</operation>
+	</file>
+
+	<file name="$sourcedir/Display.php">
+		<operation>
+			<search position="before"><![CDATA[	$topicinfo = $smcFunc['db_fetch_assoc']($request);
+	$smcFunc['db_free_result']($request);]]></search>
+			<add><![CDATA[
+	// Added by Related Topics
+	if (!empty($modSettings['relatedTopicsEnabled']))
+	{
+		require_once($sourcedir . '/Subs-Related.php');
+		loadRelated($topic);
+	}]]></add>
+		</operation>
+	</file>
+
+	<file name="$themedir/Display.template.php">
+		<operation>
+			<search position="after"><![CDATA[	if ($context['show_spellchecking'])
+		echo '
+			<form action="', $scripturl, '?action=spellcheck" method="post" accept-charset="', $context['character_set'], '" name="spell_form" id="spell_form" target="spellWindow"><input type="hidden" name="spellstring" value="" /></form>]]></search>
+			<add><![CDATA[
+	// Added by Related Topics
+	if (!empty($context['related_topics'])) // TODO: Have ability to display no related topics?
+	{
+		echo '
+			<div class="cat_bar">
+				<h3 class="catbg">', $txt['related_topics'], '</h3>
+			</div>
+			<div class="tborder topic_table" id="messageindex">
+				<table class="table_grid" cellspacing="0">
+					<thead>
+						<tr class="catbg">';
+
+		// Are there actually any topics to show?
+		if (!empty($context['related_topics']))
+		{
+			echo '
+							<th scope="col" class="smalltext first_th" width="8%" colspan="2">&nbsp;</th>
+							<th scope="col" class="smalltext">', $txt['subject'], ' / ', $txt['started_by'], '</th>
+							<th scope="col" class="smalltext center" width="14%">', $txt['replies'], '</th>
+							<th scope="col" class="smalltext last_th" width="22%">', $txt['last_post'], '</th>';
+		}
+		// No topics.... just say, "sorry bub".
+		else
+			echo '
+							<th scope="col" class="smalltext first_th" width="8%">&nbsp;</th>
+							<th class="smalltext" colspan="3"><strong>', $txt['msg_alert_none'], '</strong></th>
+							<th scope="col" class="smalltext last_th" width="8%">&nbsp;</th>';
+
+		echo '
+						</tr>
+					</thead>
+					<tbody>';
+
+		foreach ($context['related_topics'] as $topic)
+		{
+			// Is this topic pending approval, or does it have any posts pending approval?
+			if ($topic['board']['can_approve_posts'] && $topic['unapproved_posts'])
+				$color_class = !$topic['approved'] ? 'approvetbg' : 'approvebg';
+			// We start with locked and sticky topics.
+			elseif ($topic['is_sticky'] && $topic['is_locked'])
+				$color_class = 'stickybg locked_sticky';
+			// Sticky topics should get a different color, too.
+			elseif ($topic['is_sticky'])
+				$color_class = 'stickybg';
+			// Locked topics get special treatment as well.
+			elseif ($topic['is_locked'])
+				$color_class = 'lockedbg';
+			// Last, but not least: regular topics.
+			else
+				$color_class = 'windowbg';
+
+			// Some columns require a different shade of the color class.
+			$alternate_class = $color_class . '2';
+
+			echo '
+						<tr>
+							<td class="icon1 ', $color_class, '">
+								<img src="', $settings['images_url'], '/topic/', $topic['class'], '.gif" alt="" />
+							</td>
+							<td class="icon2 ', $color_class, '">
+								<img src="', $topic['first_post']['icon_url'], '" alt="" />
+							</td>
+							<td class="subject ', $alternate_class, '">
+								<div ', (!empty($topic['quick_mod']['modify']) ? 'id="topic_' . $topic['first_post']['id'] . '" onmouseout="mouse_on_div = 0;" onmouseover="mouse_on_div = 1;" ondblclick="modify_topic(\'' . $topic['id'] . '\', \'' . $topic['first_post']['id'] . '\', \'' . $context['session_id'] . '\', \'' . $context['session_var'] . '\');"' : ''), '>
+									', $topic['is_sticky'] ? '<strong>' : '', '<span id="msg_' . $topic['first_post']['id'] . '">', $topic['first_post']['link'], (!$topic['board']['can_approve_posts'] && !$topic['approved'] ? '&nbsp;<em>(' . $txt['awaiting_approval'] . ')</em>' : ''), '</span>', $topic['is_sticky'] ? '</strong>' : '' ;
+
+			// Is this topic new? (assuming they are logged in!)
+			if ($topic['new'] && $context['user']['is_logged'])
+					echo '
+									<a href="', $topic['new_href'], '" id="newicon' . $topic['first_post']['id'] . '"><img src="', $settings['lang_images_url'], '/new.gif" alt="', $txt['new'], '" /></a>';
+
+			echo '
+									<p>', $txt['started_by'], ' ', $topic['first_post']['member']['link'], '
+										<small id="pages' . $topic['first_post']['id'] . '">', $topic['pages'], '</small>
+										<small>', $topic['board']['link'], '</small>
+									</p>
+								</div>
+							</td>
+							<td class="stats ', $color_class, '">
+								', $topic['replies'], ' ', $txt['replies'], '
+								<br />
+								', $topic['views'], ' ', $txt['views'], '
+							</td>
+							<td class="lastpost ', $alternate_class, '">
+								<a href="', $topic['last_post']['href'], '"><img src="', $settings['images_url'], '/icons/last_post.gif" alt="', $txt['last_post'], '" title="', $txt['last_post'], '" /></a>
+								', $topic['last_post']['time'], '<br />
+								', $txt['by'], ' ', $topic['last_post']['member']['link'], '
+							</td>
+						</tr>';
+		}
+
+		echo '
+				</table>
+			</div><br />';
+	}
+
+]]></add>
+		</operation>
+	</file>
+
+	<file name="$boarddir/index.php">
+		<operation>
+			<search position="before"><![CDATA[		'register2' => array('Register.php', 'Register2'),]]></search>
+			<add><![CDATA[		'related' => array('Subs-Related.php', 'Related'),]]></add>
+		</operation>
+	</file>
+</modification>

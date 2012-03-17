@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<!DOCTYPE package-info SYSTEM "http://www.simplemachines.org/xml/package-info">
+
+<package-info xmlns="http://www.simplemachines.org/xml/package-info" xmlns:smf="http://www.simplemachines.org/">
+	<id>Niko:RelatedTopic</id>
+	<name>Related Topics</name>
+	<version>1.4</version>
+	<type>modification</type>
+
+	<install for="2.0 RC5, 2.0">
+		<readme parsebbc="true">readme.txt</readme>
+
+		<database>SMF-2.0/related_topics.php</database>
+
+		<require-file name="SMF-2.0/Sources/RelatedTopics.php" destination="$sourcedir" />
+		<require-file name="SMF-2.0/Sources/Subs-Related.php" destination="$sourcedir" />
+		<require-file name="SMF-2.0/Sources/Subs-RelatedFulltext.php" destination="$sourcedir" />
+
+		<require-file name="SMF-2.0/Themes/default/RelatedTopicsAdmin.template.php" destination="$themedir" />
+
+		<modification type="file">install.xml</modification>
+		<modification type="file">language.xml</modification>
+
+		<redirect url="$scripturl?action=admin;area=relatedtopics;sa=methods"></redirect>
+	</install>
+
+	<uninstall for="2.0 RC5, 2.0">
+		<remove-file name="$sourcedir/RelatedTopics.php" />
+		<remove-file name="$sourcedir/Subs-Related.php" />
+		<remove-file name="$sourcedir/Subs-RelatedFulltext.php" />
+
+		<remove-file name="$themedir/RelatedTopicsAdmin.template.php" />
+
+		<modification type="file" reverse="true">install.xml</modification>
+		<modification type="file" reverse="true">language.xml</modification>
+	</uninstall>
+
+</package-info>
