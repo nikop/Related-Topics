@@ -1,5 +1,5 @@
 [hr]
-[center][color=red][size=16pt][b]Related Topics 1.4[/b][/size][/color]
+[center][color=red][size=16pt][b]Related Topics 1.4.1[/b][/size][/color]
 [/center]
 [hr]
 
@@ -7,16 +7,6 @@
 Related Topics adds listing of "Related Topics" or Similar Topics on topic view.
 Method used to create listing can be changed from Admin. (Currently only one option)
 Currently only MySQL is supported.
-
-[b][color=blue]Versions[/color][/b]
-For SMF 2.0 use 1.4.
-For SMF 1.1.x use 1.3.x
-
-[color=blue][b][size=12pt]Please support development of this modification![/size][/b][/color]
-This modification is free but if you like this mod, please support it by making small donation.
-You can support development of this modification by donating via PayPal, [url=https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=801590]Donate now[/url]
-
-Thank you!
 
 [color=blue][b][size=12pt]Installation (1.3.x)[/size][/b][/color]
 1. Use package manager to install or do it manually
