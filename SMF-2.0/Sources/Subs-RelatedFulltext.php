@@ -4,6 +4,7 @@
  *
  * @package RelatedTopics
  * @version 1.4
+ * @license http://madjoki.com/smf-mods/license/ New-BSD
  */
 
 class RelatedTopicsFulltext

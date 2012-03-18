@@ -4,10 +4,10 @@
 <package-info xmlns="http://www.simplemachines.org/xml/package-info" xmlns:smf="http://www.simplemachines.org/">
 	<id>Niko:RelatedTopic</id>
 	<name>Related Topics</name>
-	<version>1.4</version>
+	<version>1.401</version>
 	<type>modification</type>
 
-	<install for="2.0 RC5, 2.0">
+	<install for="2.0 - 2.0.99">
 		<readme parsebbc="true">readme.txt</readme>
 
 		<database>SMF-2.0/related_topics.php</database>
@@ -24,7 +24,7 @@
 		<redirect url="$scripturl?action=admin;area=relatedtopics;sa=methods"></redirect>
 	</install>
 
-	<uninstall for="2.0 RC5, 2.0">
+	<uninstall>
 		<remove-file name="$sourcedir/RelatedTopics.php" />
 		<remove-file name="$sourcedir/Subs-Related.php" />
 		<remove-file name="$sourcedir/Subs-RelatedFulltext.php" />
