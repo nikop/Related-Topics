@@ -6,26 +6,12 @@
     <property name="package" value="${phing.project.name}" override="true" />
 	<property name="version" value="1.4.1" override="yes" />
 	
-    <property name="builddir" value="./temp" override="true" />
-	<property name="docdir" value="./temp" override="true" />
+    <property name="builddir" value="./.temp" override="true" />
+	<property name="docdir" value="./.temp" override="true" />
 	
 	<property file="./build.properties.default" />
 	<property file="${user.home}/build/build.properties" override="true" />
 	<property file="./build.properties" override="true" />
-	
-    <target name="svnrev">
-        <echo msg="Reading SVN Last Revision..." />
-		
-		<svnlastrevision
-			svnpath="/usr/bin/svn"
-			workingcopy="."
-			propertyname="svn.lastrevision"
-			lastChanged="true" />
-		
-		<available file="${build_output}/${package}_${version}-rev${svn.lastrevision}.tar.gz" property="already_build" />
-		
-		<fail if="already_build" message="Revision ${svn.lastrevision} Already build!" />
-    </target>
 
     <target name="prepare">
 		<echo msg="Removing directory ${builddir}" />
@@ -43,9 +29,10 @@
 			<fileset dir="./">
 				<include name="*" />
 				<include name="SMF-2.0/**" />
-				<exclude name="dist/*" />
+				<exclude name="dist" />
 				<exclude name="build.*" />
 				<exclude name="*.komodo*" />
+				<exclude name=".*" />
 			</fileset>
 		</copy>	
     </target>
@@ -54,18 +41,6 @@
         <echo msg="Creating archive..." />
 
         <tar destfile="${build_output}/${package}_${version}.tar.gz" compression="gzip">
-            <fileset dir="${builddir}">
-                <include name="**" />
-            </fileset>
-        </tar>
-		
-		<delete dir="${builddir}" />
-    </target>
-	
-    <target name="svn" depends="svnrev,build">
-        <echo msg="Creating archive..." />
-
-        <tar destfile="${build_output}/${package}_${version}-rev${svn.lastrevision}.tar.gz" compression="gzip">
             <fileset dir="${builddir}">
                 <include name="**" />
             </fileset>
@@ -87,18 +62,4 @@
             </fileset>
 		</phpdoc>
     </target>
-	
-	<target name="ftp-svn" depends="svn">
-		<ftpdeploy 
-			host="${ftp.host}" 
-			port="${ftp.port}"
-			username="${ftp.username}"
-			password="${ftp.password}"
-			dir="${ftp.dir}" 
-			mode="binary">
-			<fileset dir="${build_output}">
-				<include name="${package}_${version}-rev${svn.lastrevision}.tar.gz" />
-			</fileset>
-		</ftpdeploy>
-	</target>
 </project>
