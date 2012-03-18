@@ -83,7 +83,8 @@ function prepareTopicArray($topic_ids)
 			LEFT JOIN {db_prefix}log_topics AS lt ON (lt.id_topic = t.id_topic AND lt.id_member = {int:current_member})
 			LEFT JOIN {db_prefix}log_mark_read AS lmr ON (lmr.id_board = t.id_board AND lmr.id_member = {int:current_member})'). '
 		WHERE t.id_topic IN ({array_int:topic_list})
-			AND (t.approved = {int:is_approved}' . ($user_info['is_guest'] ? '' : ' OR t.id_member_started = {int:current_member}') . ')',
+			AND (t.approved = {int:is_approved}' . ($user_info['is_guest'] ? '' : ' OR t.id_member_started = {int:current_member}') . ')
+		ORDER BY ml.poster_time DESC',
 		array(
 			'current_member' => $user_info['id'],
 			'topic_list' => $topic_ids,
