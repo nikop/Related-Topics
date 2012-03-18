@@ -21,7 +21,7 @@
 		<modification type="file">install.xml</modification>
 		<modification type="file">language.xml</modification>
 
-		<redirect url="$scripturl?action=admin;area=relatedtopics;sa=methods"></redirect>
+		<redirect url="$scripturl?action=admin;area=postsettings;sa=relatedtopics"></redirect>
 	</install>
 
 	<uninstall>

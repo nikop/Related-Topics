@@ -3,13 +3,20 @@
 
 <modification xmlns="http://www.simplemachines.org/xml/modification" xmlns:smf="http://www.simplemachines.org/">
 	<id>Niko:RelatedTopics</id>
-	<version>{version}</version>
+	<version>1.5</version>
 
 	<file name="$sourcedir/Admin.php">
 		<operation>
-			<search position="after"><![CDATA['current_theme' => array(]]></search>
+			<search position="after"><![CDATA['topics' => array($txt['manageposts_topic_settings']),]]></search>
 			<add><![CDATA[
-				'relatedtopics' => array(
+						'relatedtopics' => array($txt['admin_related_topic']),]]></add>
+		</operation>
+
+		<!--<operation>
+			<search position="before"><![CDATA[						// Mod Authors for a "ADD AFTER" on this line. Ensure you end your change with a comma. For example:]]></search>
+			<add><![CDATA[						'related' => array($txt['admin_related_topic']),]]></add>
+		</operation>
+			'relatedtopics' => array(
 					'label' => $txt['admin_related_topic'],
 					'file' => 'RelatedTopics.php',
 					'function' => 'RelatedTopicsAdmin',
@@ -18,13 +25,134 @@
 						'settings' => array($txt['admin_related_topics_settings']),
 						'methods' => array($txt['admin_related_topics_methods']),
 					),
-				),
-				]]></add>
-		</operation>
-
+				),-->
+	</file>
+	
+	<file name="$sourcedir/ManagePosts.php">
 		<operation>
-			<search position="before"><![CDATA[						// Mod Authors for a "ADD AFTER" on this line. Ensure you end your change with a comma. For example:]]></search>
-			<add><![CDATA[						'related' => array($txt['admin_related_topic']),]]></add>
+			<search position="before"><![CDATA['topics' => 'ModifyTopicSettings',]]></search>
+			<add><![CDATA[
+		'relatedtopics' => 'ModifyRelatedTopicsSettings',]]></add>
+		</operation>
+		
+		<operation>
+			<search position="before"><![CDATA['topics' => array(
+				'description' => $txt['manageposts_topic_settings_description'],
+			),]]></search>
+			<add><![CDATA[
+			'relatedtopics' => array(
+				'description' => 'change this',
+			),]]></add>
+		</operation>
+				
+		<operation>
+			<search position="end"></search>
+			<add><![CDATA[
+function ModifyRelatedTopicsSettings($return_config = false)
+{
+	global $context, $smcFunc, $modSettings, $sourcedir, $user_info, $txt, $related_version, $db_type;
+
+	$context['show_rebuild_warning'] = empty($modSettings['relatedTopics_ID']) || $modSettings['relatedTopics_ID'] != $modSettings['maxMsgID'];
+
+	$related_version = '1.5';
+	
+	loadTemplate('RelatedTopicsAdmin');
+	
+	$config_vars = array(
+		array('check', 'relatedTopicsEnabled'),
+		array('int', 'relatedTopicsCount'),
+		
+		array('callback', 'related_methods'),
+		array('callback', 'ignored_boards')
+	);
+
+	if ($return_config)
+		return $config_vars;
+
+	require_once($sourcedir . '/Subs-Related.php');
+	require_once($sourcedir . '/ManageServer.php');
+		
+	initRelated();
+	
+	//
+	$relatedIndexes = !empty($modSettings['relatedIndex']) ? explode(',', $modSettings['relatedIndex']) : array();
+
+	$context['related_methods'] = array(
+		'fulltext' => array(
+			'name' => $txt['relatedFulltext'],
+			'selected' => false,
+			'supported' => $db_type == 'mysql',
+		),
+	);
+	
+	foreach ($context['related_methods'] as $id => $dummy)
+		$context['related_methods'][$id]['selected'] = in_array($id, $relatedIndexes);
+		
+	if (isset($_GET['save']))
+	{
+		checkSession('post');
+		saveDBSettings($config_vars);
+
+		//writeLog();
+		
+		$methods = array();
+
+		if (isset($_POST['related_methods']))
+		{
+			foreach ($_POST['related_methods'] as $method)
+			{
+				if (isset($context['related_methods'][$method]) && $context['related_methods'][$method]['supported'])
+					$methods[] = $method;
+			}
+		}
+
+		updateSettings(array(
+			'relatedIndex' => implode(',', $methods),
+			'relatedIgnoredboards' => !empty($_POST['ignored_boards']) ? implode(',', $_POST['ignored_boards']) : '',
+			'relatedTopics_ID' => 0,
+		));
+
+		redirectexit('action=admin;area=postsettings;sa=relatedtopics');
+	}
+	
+	// Load boards
+	$request = $smcFunc['db_query']('', '
+		SELECT b.id_board, b.name, c.id_cat, c.name AS cat_name
+		FROM {db_prefix}boards AS b
+			LEFT JOIN {db_prefix}categories AS c ON (c.id_cat = b.id_cat)
+		WHERE b.redirect = {string:blank_redirect}'. (!empty($modSettings['recycle_enable']) && !empty($modSettings['recycle_board']) ? '
+			AND NOT b.id_board = {int:recyle_board}' : ''),
+		array(
+			'blank_redirect' => '',
+			'recyle_board' => $modSettings['recycle_board'],
+		)
+	);
+	
+	$context['categories'] = array();
+	
+	while ($row = $smcFunc['db_fetch_assoc']($request))
+	{
+		if (!isset($context['categories'][$row['id_cat']]))
+			$context['categories'][$row['id_cat']] = array(
+				'id' => $row['id_cat'],
+				'name' => $row['cat_name'],
+				'boards' => array(),
+			);
+		
+		$context['categories'][$row['id_cat']]['boards'][$row['id_board']] = array(
+			'id' => $row['id_board'],
+			'name' => $row['name'],
+			'selected' => in_array($row['id_board'], $context['rt_ignore']),
+		);
+	}
+	$smcFunc['db_free_result']($request);
+
+	$context['post_url'] = $scripturl . '?action=admin;area=postsettings;sa=relatedtopics;save';
+	$context['settings_title'] = $txt['related_topics_settings_title'];
+
+	prepareDBSettingContext($config_vars);
+}
+]]></add>
 		</operation>
 	</file>
 

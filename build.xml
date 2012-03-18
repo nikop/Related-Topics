@@ -4,7 +4,7 @@
 	<property name="repository" value="relatedtopics" override="true" />
 	<property name="branch" value="trunk" override="true" />
     <property name="package" value="${phing.project.name}" override="true" />
-	<property name="version" value="1.4.1" override="yes" />
+	<property name="version" value="1.5" override="yes" />
 	
     <property name="builddir" value="./.temp" override="true" />
 	<property name="docdir" value="./.temp" override="true" />
